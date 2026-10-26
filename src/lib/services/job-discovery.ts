@@ -140,7 +140,7 @@ export async function runJobDiscovery(options: DiscoveryOptions): Promise<Discov
 
   let totalProcessed = 0
   let totalCreated = 0
-  let totalUpdated = 0
+  const totalUpdated = 0
   let totalSkipped = 0
   let totalFailed = 0
   let errorSummary: string | undefined

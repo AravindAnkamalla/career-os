@@ -106,7 +106,6 @@ function scoreSkills(
   userSkills: Array<{ name: string; proficiency: number }>
 ): { score: number; matched: string[]; missing: string[] } {
   const userSkillNames = new Set(userSkills.map(s => normalizeString(s.name)))
-  const userSkillMap = new Map(userSkills.map(s => [normalizeString(s.name), s.proficiency]))
 
   const allJobSkills = [...new Set([...requiredSkills, ...preferredSkills])]
   const matched: string[] = []
@@ -303,7 +302,6 @@ function scoreSeniority(jobTitle: string, userMaxExp: number): { score: number; 
 
   const seniorIndicators = ['senior', 'staff', 'principal', 'lead', 'architect', 'director', 'vp', 'head of', 'manager']
   const juniorIndicators = ['junior', 'jr', 'intern', 'trainee', 'fresher', 'entry level', 'graduate']
-  const midIndicators = ['mid', 'ii', 'iii', 'level 2', 'level 3']
 
   const isSenior = seniorIndicators.some(i => normalized.includes(i))
   const isJunior = juniorIndicators.some(i => normalized.includes(i))
@@ -356,7 +354,7 @@ export function calculateMatch(
   )
 
   const strongPoints = [
-    ...roleResult.reasons.filter((_, i) => roleResult.score >= 70),
+    ...roleResult.reasons.filter(() => roleResult.score >= 70),
     ...expResult.reasons.filter(() => expResult.score >= 70),
     ...locResult.reasons.filter(() => locResult.score >= 70),
     ...stackResult.reasons.filter(() => stackResult.score >= 50),
@@ -379,7 +377,7 @@ export function calculateMatch(
 
   const explanation = buildExplanation(
     job, overallScore, recommendation,
-    roleResult, skillResult, expResult, locResult, stackResult, seniorityResult
+    roleResult, skillResult, expResult, locResult
   )
 
   return {
@@ -406,9 +404,7 @@ function buildExplanation(
   role: { score: number; reasons: string[] },
   skills: { score: number; matched: string[]; missing: string[] },
   exp: { score: number; reasons: string[] },
-  loc: { score: number; reasons: string[] },
-  stack: { score: number; reasons: string[] },
-  seniority: { score: number; reasons: string[] }
+  loc: { score: number; reasons: string[] }
 ): string {
   const parts: string[] = []
   

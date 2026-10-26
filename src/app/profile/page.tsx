@@ -5,14 +5,7 @@ import {
   User, 
   Settings, 
   Save, 
-  Sparkles, 
-  ExternalLink, 
-  CheckCircle2,
-  Code,
-  Database,
-  Cloud,
-  Layers,
-  Wrench
+  Layers
 } from 'lucide-react'
 
 interface ProfileData {
@@ -141,11 +134,13 @@ export default function ProfilePage() {
     )
   }
 
+  type SkillItem = NonNullable<ProfileData['skills']>[number]
+
   const skillsByCategory = (data?.skills ?? []).reduce((acc, skill) => {
     acc[skill.category] = acc[skill.category] || []
     acc[skill.category].push(skill)
     return acc
-  }, {} as Record<string, typeof data.skills>)
+  }, {} as Record<string, SkillItem[]>)
 
   return (
     <div className="max-w-5xl mx-auto space-y-8">

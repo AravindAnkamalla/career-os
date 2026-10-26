@@ -2,17 +2,10 @@
 
 import { useState, useEffect } from 'react'
 import { 
-  Kanban, 
   Plus, 
   Search, 
-  Calendar, 
-  Clock, 
   CheckSquare, 
-  ArrowRight,
-  ExternalLink,
-  Building,
-  User,
-  AlertCircle
+  ExternalLink
 } from 'lucide-react'
 
 interface ApplicationItem {
@@ -187,6 +180,11 @@ export default function ApplicationsPage() {
       </div>
 
       {/* Kanban Board */}
+      {loading ? (
+        <div className="flex items-center justify-center min-h-[350px]">
+          <div className="animate-spin rounded-full h-8 w-8 border-b-2 border-primary"></div>
+        </div>
+      ) : (
       <div className="grid grid-cols-1 md:grid-cols-2 lg:grid-cols-3 xl:grid-cols-6 gap-4 items-start">
         {STAGES.map((stage) => {
           const stageApps = filtered.filter(a => a.stage === stage.id)
@@ -273,6 +271,7 @@ export default function ApplicationsPage() {
           )
         })}
       </div>
+      )}
 
       {/* New Application Modal */}
       {isNewModalOpen && (

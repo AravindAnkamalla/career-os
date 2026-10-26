@@ -1,15 +1,12 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   CheckSquare, 
   Plus, 
   Calendar, 
-  Clock, 
   Trash2, 
   CheckCircle2, 
-  AlertCircle,
-  Filter,
   Briefcase
 } from 'lucide-react'
 
@@ -42,7 +39,7 @@ export default function TasksPage() {
   const [priority, setPriority] = useState('medium')
   const [dueDate, setDueDate] = useState('')
 
-  const fetchTasks = async () => {
+  const fetchTasks = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
@@ -57,11 +54,11 @@ export default function TasksPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [view, categoryFilter])
 
   useEffect(() => {
     fetchTasks()
-  }, [view, categoryFilter])
+  }, [fetchTasks])
 
   const toggleStatus = async (id: string, currentStatus: string) => {
     const newStatus = currentStatus === 'done' ? 'todo' : 'done'

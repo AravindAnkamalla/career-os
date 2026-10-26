@@ -1,6 +1,6 @@
 'use client'
 
-import { useState, useEffect } from 'react'
+import { useState, useEffect, useCallback } from 'react'
 import { 
   Search, 
   Sparkles, 
@@ -15,10 +15,7 @@ import {
   MapPin,
   Building,
   Briefcase,
-  IndianRupee,
-  Calendar,
-  Layers,
-  Filter
+  Layers
 } from 'lucide-react'
 
 interface JobItem {
@@ -63,8 +60,6 @@ export default function JobsPage() {
   const [loading, setLoading] = useState(true)
   const [discovering, setDiscovering] = useState(false)
   const [search, setSearch] = useState('')
-  const [statusFilter, setStatusFilter] = useState<'all' | 'unsaved' | 'bookmarked' | 'dismissed'>('all')
-  const [minScore, setMinScore] = useState(0)
   const [expandedMatchId, setExpandedMatchId] = useState<string | null>(null)
   const [activeTab, setActiveTab] = useState<'all' | 'high_match' | 'bookmarked'>('all')
 
@@ -72,13 +67,11 @@ export default function JobsPage() {
   const [query, setQuery] = useState('Backend Engineer')
   const [location, setLocation] = useState('India')
 
-  const fetchJobs = async () => {
+  const fetchJobs = useCallback(async () => {
     try {
       setLoading(true)
       const params = new URLSearchParams()
       if (search) params.set('search', search)
-      if (statusFilter !== 'all') params.set('status', statusFilter)
-      if (minScore > 0) params.set('minScore', String(minScore))
 
       const res = await fetch(`/api/jobs?${params.toString()}`)
       if (res.ok) {
@@ -88,11 +81,11 @@ export default function JobsPage() {
     } finally {
       setLoading(false)
     }
-  }
+  }, [search])
 
   useEffect(() => {
     fetchJobs()
-  }, [search, statusFilter, minScore])
+  }, [fetchJobs])
 
   const handleRunDiscovery = async () => {
     try {

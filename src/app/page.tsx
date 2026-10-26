@@ -10,7 +10,6 @@ import {
   ArrowRight, 
   Sparkles,
   TrendingUp,
-  ExternalLink,
   Plus
 } from 'lucide-react'
 

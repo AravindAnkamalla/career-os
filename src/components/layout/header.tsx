@@ -1,7 +1,7 @@
 'use client'
 
 import { useState, useEffect } from 'react'
-import { Sparkles, Activity, RefreshCw } from 'lucide-react'
+import { Sparkles, Activity } from 'lucide-react'
 
 export function Header() {
   const [status, setStatus] = useState<{
