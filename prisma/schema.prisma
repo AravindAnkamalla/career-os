@@ -1,0 +1,430 @@
+generator client {
+  provider = "prisma-client-js"
+}
+
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+// ============ USER PROFILE ============
+
+model UserProfile {
+  id        String   @id @default(uuid())
+  name      String
+  email     String?
+  phone     String?
+  location  String?
+  bio       String?
+  portfolioUrl String?
+  githubUrl    String?
+  linkedinUrl  String?
+  resumeUrl    String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+}
+
+model CareerPreference {
+  id              String   @id @default(uuid())
+  targetRoles     String   // JSON array stored as string
+  preferredLocations String // JSON array stored as string
+  remotePreference String  @default("hybrid") // remote, hybrid, onsite, any
+  minExperience   Int      @default(0)
+  maxExperience   Int      @default(3)
+  preferredStack  String   // JSON array stored as string
+  minSalary       Int?
+  maxSalary       Int?
+  salaryCurrency  String?  @default("INR")
+  willingToRelocate Boolean @default(false)
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+}
+
+model Skill {
+  id            String   @id @default(uuid())
+  name          String
+  category      String   // Backend, Frontend, Database, Cloud, etc.
+  proficiency   Int      @default(1) // 1-5 scale
+  targetProficiency Int? 
+  yearsOfExperience Float?
+  lastUsed      DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+  
+  evidence      SkillEvidence[]
+
+  @@unique([name, category])
+}
+
+model SkillEvidence {
+  id          String   @id @default(uuid())
+  skillId     String
+  type        String   // project, work, certification, course, practice
+  description String
+  url         String?
+  date        DateTime?
+  createdAt   DateTime @default(now())
+
+  skill Skill @relation(fields: [skillId], references: [id], onDelete: Cascade)
+}
+
+// ============ JOB DISCOVERY ============
+
+model JobSource {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  type        String   // api, feed, manual
+  baseUrl     String?
+  isActive    Boolean  @default(true)
+  config      String?  // JSON config
+  lastRunAt   DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  jobs        Job[]
+  runs        IntegrationRun[]
+}
+
+model Job {
+  id                String   @id @default(uuid())
+  sourceId          String
+  externalId        String?  // ID from the source
+  title             String
+  company           String
+  location          String?
+  remoteStatus      String?  // remote, hybrid, onsite, unknown
+  employmentType    String?  // full-time, part-time, contract, internship
+  experienceMin     Int?
+  experienceMax     Int?
+  description       String
+  requiredSkills    String?  // JSON array
+  preferredSkills   String?  // JSON array
+  salaryMin         Float?
+  salaryMax         Float?
+  salaryCurrency    String?
+  salaryPeriod      String?  // yearly, monthly, hourly
+  applicationUrl    String?
+  postingUrl        String?
+  postedAt          DateTime?
+  expiresAt         DateTime?
+  firstSeenAt       DateTime @default(now())
+  lastSeenAt        DateTime @default(now())
+  isActive          Boolean  @default(true)
+  rawData           String?  // Original JSON from source
+  createdAt         DateTime @default(now())
+  updatedAt         DateTime @updatedAt
+
+  source    JobSource @relation(fields: [sourceId], references: [id])
+  matches   JobMatch[]
+  savedJobs SavedJob[]
+  applications Application[]
+
+  @@unique([sourceId, externalId])
+  @@index([company])
+  @@index([title])
+  @@index([isActive])
+}
+
+model JobMatch {
+  id              String   @id @default(uuid())
+  jobId           String
+  overallScore    Float    // 0-100
+  roleScore       Float    @default(0)
+  skillScore      Float    @default(0)
+  experienceScore Float    @default(0)
+  locationScore   Float    @default(0)
+  stackScore      Float    @default(0)
+  seniorityScore  Float    @default(0)
+  matchedSkills   String?  // JSON array
+  missingSkills   String?  // JSON array
+  strongPoints    String?  // JSON array of reasons
+  concerns        String?  // JSON array of concerns
+  recommendation  String?  // "strong_match", "good_match", "possible_match", "weak_match"
+  explanation     String?  // Human-readable explanation
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId])
+}
+
+model SavedJob {
+  id        String   @id @default(uuid())
+  jobId     String
+  status    String   @default("bookmarked") // bookmarked, dismissed, applied
+  reason    String?  // Why saved or dismissed
+  notes     String?
+  createdAt DateTime @default(now())
+  updatedAt DateTime @updatedAt
+
+  job Job @relation(fields: [jobId], references: [id], onDelete: Cascade)
+
+  @@unique([jobId])
+}
+
+// ============ APPLICATIONS ============
+
+model Application {
+  id              String   @id @default(uuid())
+  jobId           String?
+  company         String
+  role            String
+  postingUrl      String?
+  applicationDate DateTime?
+  stage           String   @default("discovered") // discovered, shortlisted, preparing, applied, recruiter_screen, technical_interview, final_interview, offer, rejected, withdrawn, on_hold
+  contactName     String?
+  contactEmail    String?
+  contactPhone    String?
+  resumeVersion   String?
+  salaryExpected  String?
+  salaryOffered   String?
+  nextFollowUp    DateTime?
+  interviewDate   DateTime?
+  rejectionReason String?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  job    Job?              @relation(fields: [jobId], references: [id], onDelete: SetNull)
+  events ApplicationEvent[]
+  tasks  Task[]
+
+  @@index([stage])
+  @@index([company])
+}
+
+model ApplicationEvent {
+  id            String   @id @default(uuid())
+  applicationId String
+  fromStage     String?
+  toStage       String
+  notes         String?
+  occurredAt    DateTime @default(now())
+  createdAt     DateTime @default(now())
+
+  application Application @relation(fields: [applicationId], references: [id], onDelete: Cascade)
+
+  @@index([applicationId])
+}
+
+// ============ TASKS ============
+
+model Task {
+  id              String   @id @default(uuid())
+  title           String
+  description     String?
+  category        String   @default("career_admin") // job_search, dsa, backend, system_design, project, interview_prep, communication, career_admin
+  priority        String   @default("medium") // low, medium, high, urgent
+  status          String   @default("todo") // todo, in_progress, done, cancelled, deferred
+  dueDate         DateTime?
+  estimatedMinutes Int?
+  actualMinutes   Int?
+  applicationId   String?
+  relatedJobId    String?
+  relatedProjectId String?
+  isRecurring     Boolean  @default(false)
+  recurringRule   String?  // cron or simple rule
+  completedAt     DateTime?
+  notes           String?
+  createdAt       DateTime @default(now())
+  updatedAt       DateTime @updatedAt
+
+  application Application? @relation(fields: [applicationId], references: [id], onDelete: SetNull)
+
+  @@index([status])
+  @@index([dueDate])
+  @@index([category])
+  @@index([priority])
+}
+
+// ============ LEARNING ============
+
+model LearningTrack {
+  id          String   @id @default(uuid())
+  name        String   @unique
+  description String?
+  category    String   // backend, database, api, system_design, dsa, devops, fde, communication
+  order       Int      @default(0)
+  status      String   @default("not_started") // not_started, in_progress, completed, paused
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  items LearningItem[]
+}
+
+model LearningItem {
+  id          String   @id @default(uuid())
+  trackId     String
+  title       String
+  type        String   // concept, exercise, project, reading, video, practice
+  description String?
+  resourceUrl String?
+  order       Int      @default(0)
+  status      String   @default("not_started") // not_started, in_progress, completed, skipped
+  difficulty  String?  // beginner, intermediate, advanced
+  notes       String?
+  completedAt DateTime?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  track    LearningTrack @relation(fields: [trackId], references: [id], onDelete: Cascade)
+  sessions LearningSession[]
+}
+
+model LearningSession {
+  id          String   @id @default(uuid())
+  itemId      String
+  startedAt   DateTime @default(now())
+  endedAt     DateTime?
+  durationMin Int?
+  notes       String?
+  rating      Int?     // 1-5 self-assessed understanding
+  createdAt   DateTime @default(now())
+
+  item LearningItem @relation(fields: [itemId], references: [id], onDelete: Cascade)
+}
+
+// ============ DSA ============
+
+model DsaProblem {
+  id          String   @id @default(uuid())
+  title       String
+  url         String?
+  platform    String?  // leetcode, hackerrank, codeforces, etc.
+  topic       String   // arrays, strings, trees, graphs, dp, etc.
+  difficulty  String   // easy, medium, hard
+  notes       String?
+  createdAt   DateTime @default(now())
+  updatedAt   DateTime @updatedAt
+
+  attempts DsaAttempt[]
+
+  @@unique([title, platform])
+}
+
+model DsaAttempt {
+  id            String   @id @default(uuid())
+  problemId     String
+  attemptDate   DateTime @default(now())
+  status        String   // solved, partially_solved, unsolved, reviewed
+  timeMinutes   Int?
+  approach      String?
+  complexity    String?  // time and space complexity
+  mistakes      String?
+  solvedIndependently Boolean @default(false)
+  needsReview   Boolean @default(true)
+  nextReviewAt  DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+
+  problem DsaProblem @relation(fields: [problemId], references: [id], onDelete: Cascade)
+
+  @@index([problemId])
+  @@index([nextReviewAt])
+}
+
+// ============ INTERVIEWS ============
+
+model Interview {
+  id            String   @id @default(uuid())
+  applicationId String?
+  company       String
+  role          String?
+  type          String   // recruiter_screen, behavioral, technical, system_design, dsa, fde, final
+  scheduledAt   DateTime?
+  duration      Int?     // minutes
+  status        String   @default("scheduled") // scheduled, completed, cancelled, no_show
+  preparation   String?  // JSON checklist
+  topicAreas    String?  // JSON array
+  practiceQs    String?  // JSON array
+  answerNotes   String?
+  reflection    String?
+  struggled     String?  // What I struggled with
+  outcome       String?  // positive, neutral, negative, unknown
+  followUpDate  DateTime?
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+
+  @@index([scheduledAt])
+  @@index([company])
+}
+
+// ============ PROJECTS ============
+
+model Project {
+  id            String   @id @default(uuid())
+  name          String   @unique
+  description   String?
+  repoUrl       String?
+  liveUrl       String?
+  techStack     String?  // JSON array
+  problemSolved String?
+  architecture  String?
+  features      String?  // JSON array
+  challenges    String?  // JSON array
+  outcomes      String?
+  status        String   @default("active") // active, completed, paused, archived
+  screenshotUrls String? // JSON array
+  notes         String?
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+// ============ NOTIFICATIONS ============
+
+model NotificationPreference {
+  id            String  @id @default(uuid())
+  type          String  @unique // new_matches, follow_ups, interviews, overdue_tasks, weekly_review, sync_failures
+  enabled       Boolean @default(true)
+  emailEnabled  Boolean @default(false)
+  inAppEnabled  Boolean @default(true)
+  quietStart    String? // HH:mm
+  quietEnd      String? // HH:mm
+  createdAt     DateTime @default(now())
+  updatedAt     DateTime @updatedAt
+}
+
+model Notification {
+  id          String   @id @default(uuid())
+  type        String
+  title       String
+  message     String
+  actionUrl   String?
+  isRead      Boolean  @default(false)
+  emailSent   Boolean  @default(false)
+  emailError  String?
+  createdAt   DateTime @default(now())
+  readAt      DateTime?
+}
+
+// ============ INTEGRATION & OPERATIONS ============
+
+model IntegrationRun {
+  id              String   @id @default(uuid())
+  sourceId        String?
+  type            String   // job_discovery, notification, sync
+  status          String   // running, completed, failed, cancelled
+  startedAt       DateTime @default(now())
+  completedAt     DateTime?
+  durationMs      Int?
+  totalProcessed  Int      @default(0)
+  totalCreated    Int      @default(0)
+  totalUpdated    Int      @default(0)
+  totalSkipped    Int      @default(0)
+  totalFailed     Int      @default(0)
+  errorSummary    String?
+  details         String?  // JSON
+  triggeredBy     String   @default("manual") // manual, scheduled, api
+  correlationId   String?
+  createdAt       DateTime @default(now())
+
+  source JobSource? @relation(fields: [sourceId], references: [id], onDelete: SetNull)
+
+  @@index([type])
+  @@index([status])
+  @@index([startedAt])
+}
