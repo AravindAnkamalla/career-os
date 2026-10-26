@@ -41,35 +41,35 @@ const INITIAL_SKILLS = [
 ]
 
 export async function seedInitialProfile(): Promise<{ created: boolean; message: string }> {
-  // Check if profile already exists
+  // Create profile if missing
   const existingProfile = await prisma.userProfile.findFirst()
-  if (existingProfile) {
-    return { created: false, message: 'Profile already exists. Skipping seed.' }
+  if (!existingProfile) {
+    await prisma.userProfile.create({
+      data: {
+        name: 'Aravind Ankamalla',
+        portfolioUrl: 'https://aravind-devspace.vercel.app/',
+        githubUrl: 'https://github.com/AravindAnkamalla',
+        linkedinUrl: 'https://www.linkedin.com/in/aravind-ankamalla-245a9023b/',
+        bio: 'Software engineer with experience across full-stack development, backend APIs, database work, third-party integrations, and production debugging.',
+      },
+    })
   }
 
-  // Create profile
-  await prisma.userProfile.create({
-    data: {
-      name: 'Aravind Ankamalla',
-      portfolioUrl: 'https://aravind-devspace.vercel.app/',
-      githubUrl: 'https://github.com/AravindAnkamalla',
-      linkedinUrl: 'https://www.linkedin.com/in/aravind-ankamalla-245a9023b/',
-      bio: 'Software engineer with experience across full-stack development, backend APIs, database work, third-party integrations, and production debugging.',
-    },
-  })
-
-  // Create career preferences
-  await prisma.careerPreference.create({
-    data: {
-      targetRoles: JSON.stringify(['Backend Engineer', 'Forward Deployed Engineer', 'Full-Stack Engineer', 'Software Engineer']),
-      preferredLocations: JSON.stringify(['Hyderabad', 'Bengaluru']),
-      remotePreference: 'any',
-      minExperience: 0,
-      maxExperience: 3,
-      preferredStack: JSON.stringify(['Node.js', 'TypeScript']),
-      salaryCurrency: 'INR',
-    },
-  })
+  // Create career preferences if missing
+  const existingPrefs = await prisma.careerPreference.findFirst()
+  if (!existingPrefs) {
+    await prisma.careerPreference.create({
+      data: {
+        targetRoles: JSON.stringify(['Backend Engineer', 'Forward Deployed Engineer', 'Full-Stack Engineer', 'Software Engineer']),
+        preferredLocations: JSON.stringify(['Hyderabad', 'Bengaluru']),
+        remotePreference: 'any',
+        minExperience: 0,
+        maxExperience: 3,
+        preferredStack: JSON.stringify(['Node.js', 'TypeScript']),
+        salaryCurrency: 'INR',
+      },
+    })
+  }
 
   // Create skills
   for (const skill of INITIAL_SKILLS) {
@@ -80,5 +80,51 @@ export async function seedInitialProfile(): Promise<{ created: boolean; message:
     })
   }
 
-  return { created: true, message: 'Initial profile, preferences, and skills created successfully.' }
+  // Create initial projects
+  const INITIAL_PROJECTS = [
+    {
+      name: 'Event Management System',
+      description: 'End-to-end event discovery, registration, and ticketing platform with automated workflows.',
+      repoUrl: 'https://github.com/AravindAnkamalla',
+      liveUrl: 'https://aravind-devspace.vercel.app/',
+      techStack: JSON.stringify(['Node.js', 'TypeScript', 'Next.js', 'PostgreSQL', 'Prisma', 'Tailwind CSS']),
+      problemSolved: 'Streamlines event scheduling, attendee registrations, and email confirmation dispatch without race conditions.',
+      architecture: 'Next.js App Router full-stack architecture with Prisma ORM and relational schema design.',
+      features: JSON.stringify(['Event creation & management', 'Attendee registration', 'Ticket issuance', 'Search & categorization']),
+      challenges: JSON.stringify(['Concurrency control on limited ticket inventories', 'Database query optimization']),
+      status: 'active',
+    },
+    {
+      name: 'Dealership Management System Integrations',
+      description: 'Software workflows and third-party integration pipelines for dealership management operations.',
+      repoUrl: 'https://github.com/AravindAnkamalla',
+      techStack: JSON.stringify(['Node.js', 'TypeScript', 'REST APIs', 'PostgreSQL', 'Webhooks']),
+      problemSolved: 'Automated bi-directional data synchronization between external DMS platforms and internal inventory pipelines.',
+      architecture: 'Event-driven webhook ingest service with bounded retries, idempotency keys, and failure observability.',
+      features: JSON.stringify(['Automated vehicle inventory sync', 'Customer lead processing', 'Webhook delivery verification']),
+      challenges: JSON.stringify(['Handling flaky third-party partner APIs', 'Data schema transformation across heterogeneous systems']),
+      status: 'completed',
+    },
+    {
+      name: 'B2B Healthcare Benefits Platform',
+      description: 'Enterprise healthcare benefits platform supporting employee enrollments and policy management.',
+      repoUrl: 'https://github.com/AravindAnkamalla',
+      techStack: JSON.stringify(['Node.js', 'Express.js', 'GraphQL', 'AWS Lambda', 'PostgreSQL']),
+      problemSolved: 'Reduced manual administrative overhead for corporate employee insurance and wellness benefits enrollment.',
+      architecture: 'Microservices with GraphQL API gateway and role-based access control.',
+      features: JSON.stringify(['Employee benefits portal', 'Policy claim workflows', 'Role-based authorization']),
+      challenges: JSON.stringify(['Strict data privacy and HIPAA-aligned security', 'Complex policy calculation rules']),
+      status: 'completed',
+    },
+  ]
+
+  for (const proj of INITIAL_PROJECTS) {
+    await prisma.project.upsert({
+      where: { name: proj.name },
+      update: {},
+      create: proj,
+    })
+  }
+
+  return { created: true, message: 'Initial profile, preferences, skills, and projects created successfully.' }
 }
