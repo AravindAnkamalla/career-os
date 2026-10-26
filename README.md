@@ -1,107 +1,110 @@
-# CareerOS — Personal Career Operating System
+# CareerOS
 
-CareerOS is a private, single-user **Career Operating System** designed for software engineers to organize their entire career development, job search, interview preparation, and daily execution in one unified workspace.
+A self-hosted web app for tracking software engineering job searches, technical interview preparation, and daily engineering tasks.
 
----
+## Features
 
-## Key Capabilities
-
-1. **Deterministic Job Matching Engine**:
-   - Transparent, multi-factor scoring (Role relevance, Technical skill overlap, Experience bounds, Location/Remote mode, Preferred stack alignment, Seniority fit).
-   - Multi-dimensional breakdown with explainable recommendations — no black-box scores.
-
-2. **Job Discovery & Provider Architecture**:
-   - Provider interface supporting live API feeds (JSearch via RapidAPI, Adzuna) and built-in development fixtures.
-   - Idempotent deduplication using stable external IDs, URLs, and time-windowed title/company matches.
-   - Run history tracking: durations, new jobs, skipped duplicates, and error summaries.
-
-3. **Application Pipeline & Kanban Tracker**:
-   - Visual Kanban tracking across stages: *Discovered → Shortlisted → Preparing → Applied → Recruiter Screen → Technical Interview → Final Interview → Offer*.
-   - Direct stage transition controls, timeline history, and follow-up deadline reminders.
-
-4. **Daily Execution & Task Planning**:
-   - Task manager organized across categories: *Job Search, Backend Engineering, System Design, DSA, Interview Prep, Career Admin*.
-   - Filter views for *Today, Upcoming (7 Days), Overdue*, and priority ordering (*Urgent, High, Medium, Low*).
-   - Deep bi-directional linking between Applications, Discovered Jobs, and Preparation Tasks.
-
-5. **Dynamic Career Profile & Preferences**:
-   - Editable target roles, preferred locations, remote work preferences, experience bounds, and preferred tech stack.
-   - Calibrates the job matching algorithm dynamically without hardcoding.
-
----
+- **Job Discovery & Matching**: Aggregates job postings from external APIs (JSearch / Google Jobs) with fallback fixtures. Deterministic scoring algorithm evaluates role alignment, skill overlap, experience level, and preferred stack.
+- **Application Tracker**: Kanban pipeline tracking stages from discovery through offer. Records interview dates, follow-up deadlines, and stage history.
+- **Daily Task Planner**: Task management categorized by job search, system design, backend engineering, DSA, and interview prep.
+- **Project Portfolio**: Records project architecture, problems solved, technical challenges, repository links, and live URLs.
+- **DSA Practice Log**: Logs Java data structure and algorithm problems with pattern tags, time/space complexity, and solution approach notes.
+- **Interview Prep**: Outlines talking points, STAR behavioral notes, and reflection logs for recruiter screens and technical rounds.
+- **Upskilling Tracks**: Checklists across backend engineering, database internals, API reliability, distributed systems, and DSA.
 
 ## Tech Stack
 
-- **Framework**: Next.js 15 (App Router, Server Components & Route Handlers)
-- **Language**: TypeScript (strict mode)
-- **Styling & UI**: Tailwind CSS v4, Lucide React, shadcn/ui patterns
-- **Data & ORM**: Prisma ORM with SQLite for local development (seamless migration path to PostgreSQL for deployment)
-- **Testing**: Vitest with unit and integration test coverage
-- **Validation**: Zod schema validation at external and input boundaries
+- **Framework**: Next.js 15 (App Router, Server Components, Route Handlers)
+- **Language**: TypeScript
+- **Database**: SQLite (via Prisma ORM; compatible with PostgreSQL)
+- **UI**: Tailwind CSS, Lucide React
+- **Testing**: Vitest
 
----
+## Quick Start
 
-## Getting Started
+### 1. Install dependencies
 
-### 1. Prerequisites
-- Node.js >= 18
-- npm >= 9
-
-### 2. Installation
 ```bash
 git clone https://github.com/AravindAnkamalla/career-os.git
 cd career-os
 npm install
 ```
 
-### 3. Environment Setup
-Copy the environment example template:
+### 2. Configure environment variables
+
+Copy the example file:
+
 ```bash
 cp .env.example .env
 ```
 
-Configuration parameters:
+Default variables:
+
 ```env
 DATABASE_URL="file:./dev.db"
 NEXT_PUBLIC_APP_URL="http://localhost:3000"
 
-# Optional Live Job Discovery (RapidAPI JSearch)
+# Optional: JSearch (RapidAPI) for live job listings
 JSEARCH_API_KEY=""
 JSEARCH_API_HOST="jsearch.p.rapidapi.com"
 ```
-*Note: If no API key is configured, CareerOS automatically runs in Development Fixture mode with clearly labeled sample jobs.*
 
-### 4. Database Setup & Seeding
+*If no API key is provided, the application runs using local development fixtures.*
+
+### 3. Initialize the database
+
 ```bash
-npx prisma generate
 npx prisma db push
 ```
 
-To seed initial profile data, career preferences, and verified technical skills:
-```bash
-curl -X POST http://localhost:3000/api/seed
-# or click "Seed Profile" in the application header
-```
+### 4. Start the development server
 
-### 5. Running the Application
 ```bash
 npm run dev
 ```
-Open [http://localhost:3000](http://localhost:3000) in your browser.
 
----
+The application will be available at [http://localhost:3000](http://localhost:3000).
 
-## Running Automated Tests
+To populate initial profile preferences and sample data, click **Seed Profile** in the top navigation or run:
+
+```bash
+curl -X POST http://localhost:3000/api/seed
+```
+
+## Running Tests
+
 ```bash
 npm run test:run
 ```
 
-All core workflows (Deterministic matching engine, multi-dimensional scoring, job discovery normalization, deduplication, application creation, and task linking) are covered with unit and integration tests.
+Runs unit tests for the job matching algorithm and integration tests for the discovery, application, and task workflows.
 
----
+## Project Structure
 
-## Architecture & Principles
-- **Forward Deployed Engineer Mindset**: Build small, practical, working vertical slices connected end-to-end.
-- **Explainability Over Magic**: Match scores provide actionable reasons and identify missing skills.
-- **Zero Mock Pretending**: Fixture data is explicitly labeled as dev data. Live data is integrated through typed provider interfaces.
-- **Privacy by Default**: Career data stays private on your local machine / database.
+```text
+career-os/
+├── prisma/
+│   └── schema.prisma         # Database schema (User, Job, Application, Task, Project, DSA)
+├── src/
+│   ├── app/                  # Next.js App Router pages and API routes
+│   │   ├── api/              # REST route handlers
+│   │   ├── applications/     # Application Kanban pipeline
+│   │   ├── dsa/              # DSA practice tracker
+│   │   ├── interviews/       # Interview prep & talking points
+│   │   ├── jobs/             # Job discovery & scoring
+│   │   ├── learning/         # Upskilling tracks
+│   │   ├── profile/          # Profile & algorithm preferences
+│   │   ├── projects/         # Engineering project portfolio
+│   │   └── tasks/            # Daily planner
+│   ├── components/           # Reusable UI and layout components
+│   └── lib/
+│       ├── db.ts             # Prisma client instance
+│       ├── integrations/     # Job API providers (JSearch, Fixture)
+│       ├── matching/         # Scoring and fit calculation logic
+│       └── services/         # Job discovery, deduplication, and seed services
+└── vitest.config.ts          # Test runner configuration
+```
+
+## License
+
+MIT
